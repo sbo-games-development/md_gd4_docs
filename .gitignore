@@ -1,0 +1,16 @@
+planung/
+build/
+dist/
+site/
+.git/
+.git*/
+.idea/
+.idea*/
+.cache/
+__pycache__/
+__pycache__*/
+venv/
+venv*/
+*.ack
+*.crt
+*.key
