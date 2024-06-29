@@ -49,3 +49,10 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - User documentation:
+    - userdoc/index.md
+  - Project documentation:
+    - app.py: src/index.md
+    - Control:
+      - settings.py: src/control/settings.md
+      - build.py: src/control/build.md
