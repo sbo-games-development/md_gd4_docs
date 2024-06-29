@@ -19,31 +19,21 @@ class Main:
         """
         Constructor of the applications Main class.
 
-        Either initializes the settings or build markdown files as configured in settings.
-
-        Attributes:
-            settings (Settings): Local class instance to handle the settings for reading the source
-            args (argparse.Namespace): Local parsed command line arguments, either args.init or args.build is True after
-                the parsing was successful
-            result (bool): Local var, set to False if any error occurs
-            doc_settings (dict): Local var, deserialized settings for reading the sourcecode
+        Depending on command line args, either initializes the settings or build markdown files as configured in
+        the settings file.
         """
         self.version: str = "0.1.0"
         args: argparse.Namespace = self.arg_parse_init()
         settings: Settings = Settings()
-        result: bool = True
-        doc_settings: dict = {}
         if args.init:
-            result = settings.init_settings()
+            result: bool = settings.init_settings()
         elif args.build:
-            result = settings.load_settings()
+            result: bool = settings.load_settings()
             if result:
-                doc_settings = settings.get_settings()
-                if doc_settings:
-                    Build(doc_settings)
+                Build(settings.get_settings(), settings.doc_conf_file)
         else:
             print("Something went very wrong ...")
-            result = False
+            result: bool = False
         if result:
             exit(0)
         else:

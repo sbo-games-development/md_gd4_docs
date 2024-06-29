@@ -1,6 +1,5 @@
-from ruamel.yaml import YAML
 from os.path import isfile
-from sys import exit
+from ruamel.yaml import YAML
 
 
 class Settings:
@@ -18,6 +17,7 @@ class Settings:
         """
         self.doc_conf_file: str = "./md_gd4_docs.yml"
         self.doc_conf_data: dict = {
+            "doc_destination": "",
             "rebuild_src_path": True,
             "project_scan": True,
             "project_scan_options": {
@@ -72,7 +72,7 @@ class Settings:
             return False
         try:
             with open(self.doc_conf_file, "r") as file:
-                self.yaml.load(file)
+                self.doc_conf_data = self.yaml.load(file)
                 print(f"Documentation settings file {self.doc_conf_file} successfully loaded.")
                 return True
         except Exception as e:
