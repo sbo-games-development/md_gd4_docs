@@ -49,7 +49,7 @@ class Main:
         parser = argparse.ArgumentParser(
             prog="md_gd4_docs",
             description="Create Markdown documentation files automatically from Godot 4 projects/docstrings",
-            epilog="For a full user documentation, visit https://..."  # todo: insert address for user manual
+            epilog="For a full user documentation, visit https://sbo-games-development.github.io/md_gd4_docs/userdoc/"
         )
         group = parser.add_mutually_exclusive_group(required=True)
         group.add_argument(
