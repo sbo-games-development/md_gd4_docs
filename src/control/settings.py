@@ -1,5 +1,6 @@
 from os.path import isfile
 from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedMap
 
 
 class Settings:
@@ -16,7 +17,7 @@ class Settings:
         Constructor of the class, defining class attributes.
         """
         self.doc_conf_file: str = "./md_gd4_docs.yml"
-        self.doc_conf_data: dict = {
+        self.doc_conf_data: [dict | CommentedMap] = {
             "doc_destination": "",
             "rebuild_src_path": True,
             "project_scan": True,
@@ -80,7 +81,7 @@ class Settings:
             print(e)
             return False
 
-    def get_settings(self) -> dict:
+    def get_settings(self) -> CommentedMap:
         """
         Get the settings dict.
 
@@ -88,4 +89,4 @@ class Settings:
             doc_conf_data: Deserialized settings object. Further checks of the correctness of this settings object is
                 not done here, has to be done before reading the source at the build stage
         """
-        return self.doc_conf_data
+        return CommentedMap(self.doc_conf_data)
