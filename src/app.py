@@ -1,3 +1,10 @@
+"""
+An application to create Markdown documentation files automatically from Godot 4 projects/docstrings.
+
+The full source code can be found at
+[md_gd4_docs - GitHub.com](https://github.com/sbo-games-development/md_gd4_docs){target="_blank"}
+"""
+
 import argparse
 from sys import exit
 
