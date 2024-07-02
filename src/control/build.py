@@ -258,8 +258,7 @@ class Build:
                         "main_scene": ""
                     }
                 else:
-                    print(self.gd_project)
-        # find all *.gd script files in the project
+                    print("Godot project file analyzed")
         self.script_files = self.rec_find_files_with_ext(
             "gd",
             self.doc_conf_data["project_scan_options"]["src_path"]
@@ -268,15 +267,17 @@ class Build:
             element.replace(self.doc_conf_data["project_scan_options"]["src_path"], "")
             for element in self.script_files
         ]
-        # find all *.scene script files in the project, if scene2src_links true
-        self.scene_files = self.rec_find_files_with_ext(
-            "tscn",
-            self.doc_conf_data["project_scan_options"]["src_path"]
-        )
-        self.scene_files = [
-            element.replace(self.doc_conf_data["project_scan_options"]["src_path"], "")
-            for element in self.scene_files
-        ]
+        print("Project script files list created")
+        if self.doc_conf_data["project_scan_options"]["scene2src_links"]:
+            self.scene_files = self.rec_find_files_with_ext(
+                "tscn",
+                self.doc_conf_data["project_scan_options"]["src_path"]
+            )
+            self.scene_files = [
+                element.replace(self.doc_conf_data["project_scan_options"]["src_path"], "")
+                for element in self.scene_files
+            ]
+            print("Project scene files list created")
 
     @staticmethod
     def rec_find_files_with_ext(file_extension: str, search_directory: str) -> list:

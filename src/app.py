@@ -38,6 +38,7 @@ class Main:
             result: bool = settings.load_settings()
             if result:
                 Build(settings.get_settings(), settings.doc_conf_file)
+                # todo: Build addons/plugins might be handled here later ...
         else:
             print("Something went very wrong ...")
             result: bool = False
