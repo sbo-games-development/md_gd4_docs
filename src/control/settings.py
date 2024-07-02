@@ -74,6 +74,12 @@ class Settings:
         try:
             with open(self.doc_conf_file, "r") as file:
                 self.doc_conf_data = self.yaml.load(file)
+                if not self.doc_conf_data["doc_destination"].endswith("/"):
+                    self.doc_conf_data["doc_destination"] = \
+                        self.doc_conf_data["doc_destination"] + "/"
+                if not self.doc_conf_data["project_scan_options"]["src_path"].endswith("/"):
+                    self.doc_conf_data["project_scan_options"]["src_path"] = \
+                        self.doc_conf_data["project_scan_options"]["src_path"] + "/"
                 print(f"Documentation settings file {self.doc_conf_file} successfully loaded.")
                 return True
         except Exception as e:

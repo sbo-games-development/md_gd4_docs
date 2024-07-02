@@ -1,5 +1,8 @@
 from sys import exit
-from os.path import isdir, isfile
+from os.path import isdir, isfile, join
+from os import walk
+from fnmatch import filter
+
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 
@@ -13,6 +16,35 @@ class Build:
         gd_project: For information extracted from project.godot file
         script_files: A list with information for all script files in the project and/or in the filelist_scan scan_list
         scene_files: A list for all scene files of the project
+
+    Attributes: doc_conf_data attributes:
+        doc_destination (str): Destination directory for the resulting documentation. Create if not exists
+        rebuild_src_path (bool): Reproduces directories from src_path for doc_destination if True
+        project_scan (bool): Scanning all files of a project if True
+        project_scan_options (list[dict]): Mandatory if project_scan is True
+        filelist_scan (bool): Scanning a manually created list if True, can be combined with project_scan to add more
+            files to scan
+        scan_list (list): List to be scanned if filelist_scan is True
+
+    Attributes: doc_conf_data.project_scan_options attributes
+        src_path (str): The base directory of the project to scan
+        read_gd_project(bool): Creates a project documentation index if True
+        scene2src_links (bool): Scans and documents if a script is linked to a scene
+
+    Attributes: gd_project attributes:
+        project_name (str): For the name of the godot project, as read from the project.godot file
+        godot_version (str): For the godot version of the godot source code, as read from the project.godot file
+        main_scene (str): For the data of the main (aka starting) scene, as read from the project.godot file
+        autoload (list[dict]): Scenes that load at application start, if enabled
+
+    Attributes: gd_project.main_scene attributes:
+        scene_path (str): For the path to the main (aka starting) scene, as read from the project.godot file
+        added_script (str): The script linked to the main scene, if any
+
+    Attributes: gd_project.autoload list[dict] attributes:
+        scene_path (str): For the path to the scene, as read from the project.godot file
+        added_script (str): The script linked to the scene, if any
+        enabled (bool): Is the autoload scene enabled?
 
     Returns:
         Application_exit_code (int): Applications exits directly from this class on error. if anything is successful,
@@ -28,7 +60,7 @@ class Build:
             doc_conf_file: Path to the documentation config file
         """
         self.doc_conf_data: CommentedMap = doc_conf_data
-        self.doc_conf_file = doc_conf_file
+        self.doc_conf_file: str = doc_conf_file
         self.gd_project: dict = {
             "project_name": "",
             "godot_version": "",
@@ -228,5 +260,38 @@ class Build:
                 else:
                     print(self.gd_project)
         # find all *.gd script files in the project
-
+        self.script_files = self.rec_find_files_with_ext(
+            "gd",
+            self.doc_conf_data["project_scan_options"]["src_path"]
+        )
+        self.script_files = [
+            element.replace(self.doc_conf_data["project_scan_options"]["src_path"], "")
+            for element in self.script_files
+        ]
         # find all *.scene script files in the project, if scene2src_links true
+        self.scene_files = self.rec_find_files_with_ext(
+            "tscn",
+            self.doc_conf_data["project_scan_options"]["src_path"]
+        )
+        self.scene_files = [
+            element.replace(self.doc_conf_data["project_scan_options"]["src_path"], "")
+            for element in self.scene_files
+        ]
+
+    @staticmethod
+    def rec_find_files_with_ext(file_extension: str, search_directory: str) -> list:
+        """
+        Gathers a list of files with the given extension in the given directory
+
+        Args:
+            file_extension: The extension of the files to search for. Example: gd (and NOT *.gd)
+            search_directory: The directory from which to scan for the files recursively
+
+        Returns:
+            List with the full path of the files found with the given extension, relative to the working directory
+        """
+        file_list: list = []
+        for root, dir_names, filenames in walk(search_directory):
+            for filename in filter(filenames, f"*.{file_extension}"):
+                file_list.append(join(root, filename))
+        return file_list
