@@ -14,7 +14,8 @@ class Build:
         doc_conf_data: The deserialized settings for reading the sourcecode
         doc_conf_file: Path to the documentation config file
         gd_project: For information extracted from project.godot file
-        script_files: A list with information for all script files in the project and/or in the filelist_scan scan_list
+        script_files: A dictionary with information for all script files in the project and/or in the filelist_scan
+            scan_list
         scene_files: A list for all scene files of the project
 
     Attributes: doc_conf_data attributes:
@@ -57,7 +58,7 @@ class Build:
     """
     def __init__(self, doc_conf_data: CommentedMap, doc_conf_file: str):
         """
-        Constructor of the class. Anything from reading project to building documentation sites is directly done here.
+        Constructor of the class. Anything from reading project to building documentation sites is done from here.
 
         Args:
             doc_conf_data: The deserialized settings for reading the sourcecode
@@ -82,7 +83,7 @@ class Build:
             self.collect_proj_files_info()
             if self.doc_conf_data["project_scan_options"]["scene2src_links"]:
                 self.connect_scene_to_script()
-            #
+            self.scan_project_scripts()
         print()
         print(self.script_files)
         print()
@@ -313,6 +314,9 @@ class Build:
         return file_list
 
     def connect_scene_to_script(self):
+        """
+        Register scene connected to script where applicable
+        """
         for scene in self.scene_files:
             fp_scene = self.doc_conf_data["project_scan_options"]["src_path"] + scene
             if isfile(fp_scene):
@@ -332,3 +336,28 @@ class Build:
                 except Exception as e:
                     print(f"Skipping file {fp_scene}, reading failed with exception:")
                     print(e)
+
+    def scan_project_scripts(self):
+        """
+        Initiates scans of docstrings for all scripts in the project
+        """
+        for script in self.script_files:
+            self.script_scanner(script)
+
+    def scan_filelist_scripts(self):
+        """
+        ToDo!
+        """
+        pass
+
+    def script_scanner(self, script: str, from_project: bool = True):
+        """
+        Scans docstrings from script, registering docstring class, inner class, const, func, signal, var,
+        enum and enum values categories
+
+        Args:
+            script: Path to the script to read from
+            from_project: If True, the path of the script is relative to the project root (src_path)
+        """
+
+        pass
