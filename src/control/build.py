@@ -352,12 +352,40 @@ class Build:
 
     def script_scanner(self, script: str, from_project: bool = True):
         """
-        Scans docstrings from script, registering docstring class, inner class, const, func, signal, var,
-        enum and enum values categories
+        Scans docstrings from script, registering docstring class, signal, enum, enum values, const, var, func, and
+        inner class categories
+
+        Members of inner classes are not scanned at this time. Eventually becomes a feature in a future version.
 
         Args:
             script: Path to the script to read from
             from_project: If True, the path of the script is relative to the project root (src_path)
         """
+        scan_stage: str = ""
+        class_doc: dict = {
+            "class_name": "",
+            "extends": "",
+            "brief_description": "",
+            "detail_description": "",
+            "signal_doc": [],
+            "enum_doc": [],  # todo: embed enum values docstrings into this list somehow
+            "const_doc": [],
+            "var_doc": [],
+            "func_doc": [],
+            "inner_class_doc": [],
 
-        pass
+        }
+        if from_project:
+            fp_script = self.doc_conf_data["project_scan_options"]["src_path"] + script
+        else:
+            fp_script = script
+        try:
+            with open(fp_script, "r") as file:
+                for line in file:
+
+                    pass
+        except Exception as e:
+
+            # todo: broader exception handling
+            print(e)
+            pass
