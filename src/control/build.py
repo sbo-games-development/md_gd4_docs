@@ -46,6 +46,10 @@ class Build:
         added_script (str): The script linked to the scene, if any
         enabled (bool): Is the autoload scene enabled?
 
+    Attributes: script_files attributes:
+        scene (str): Full path to the connected scene, if any
+        docs (list): For elements from docstring reading
+
     Returns:
         Application_exit_code (int): Applications exits directly from this class on error. if anything is successful,
             returns None to the calling Main class. This gives the possibility for working with addons there after the
@@ -70,12 +74,18 @@ class Build:
             },
             "autoload": []
         }
-        self.script_files: list = []
+        self.script_files: dict = {}
         self.scene_files: list = []
         self.check_doc_conf_data()
         print(f"Check of {self.doc_conf_file} configuration file finished, everything seems ok")
         if self.doc_conf_data["project_scan"]:
             self.collect_proj_files_info()
+            if self.doc_conf_data["project_scan_options"]["scene2src_links"]:
+                self.connect_scene_to_script()
+            #
+        print()
+        print(self.script_files)
+        print()
         #
 
     def check_doc_conf_data(self):
@@ -259,14 +269,19 @@ class Build:
                     }
                 else:
                     print("Godot project file analyzed")
-        self.script_files = self.rec_find_files_with_ext(
+        tmp_script_files = self.rec_find_files_with_ext(
             "gd",
             self.doc_conf_data["project_scan_options"]["src_path"]
         )
-        self.script_files = [
+        tmp_script_files = [
             element.replace(self.doc_conf_data["project_scan_options"]["src_path"], "")
-            for element in self.script_files
+            for element in tmp_script_files
         ]
+        for file in tmp_script_files:
+            self.script_files[file] = {
+                "scene": "",
+                "docs": []
+            }
         print("Project script files list created")
         if self.doc_conf_data["project_scan_options"]["scene2src_links"]:
             self.scene_files = self.rec_find_files_with_ext(
@@ -296,3 +311,24 @@ class Build:
             for filename in filter(filenames, f"*.{file_extension}"):
                 file_list.append(join(root, filename))
         return file_list
+
+    def connect_scene_to_script(self):
+        for scene in self.scene_files:
+            fp_scene = self.doc_conf_data["project_scan_options"]["src_path"] + scene
+            if isfile(fp_scene):
+                try:
+                    with open(fp_scene, "r") as file:
+                        for line in file:
+                            if 'ext_resource type="Script"' not in line:
+                                continue
+                            script_path = line.strip("[").strip("]")
+                            script_path = script_path.replace(
+                                'ext_resource type="Script" path="res://',
+                                ""
+                            )
+                            script_path = script_path.split('"', 1)[0]
+                            self.script_files[script_path]["scene"] = scene
+                            break
+                except Exception as e:
+                    print(f"Skipping file {fp_scene}, reading failed with exception:")
+                    print(e)
