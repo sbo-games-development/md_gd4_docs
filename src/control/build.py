@@ -2,6 +2,8 @@ from sys import exit
 from os.path import isdir, isfile, join
 from os import walk
 from fnmatch import filter
+from validators import url
+# from urllib.parse import urlparse
 
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
@@ -84,9 +86,7 @@ class Build:
             if self.doc_conf_data["project_scan_options"]["scene2src_links"]:
                 self.connect_scene_to_script()
             self.scan_project_scripts()
-        print()
-        print(self.script_files)
-        print()
+
         #
 
     def check_doc_conf_data(self):
@@ -362,30 +362,200 @@ class Build:
             from_project: If True, the path of the script is relative to the project root (src_path)
         """
         scan_stage: str = ""
+        tmp_brief_description = ""
+        tmp_detail_description = ""
+        tmp_tags = []
         class_doc: dict = {
-            "class_name": "",
+            "class_name": "not exposed",
             "extends": "",
             "brief_description": "",
             "detail_description": "",
             "signal_doc": [],
-            "enum_doc": [],  # todo: embed enum values docstrings into this list somehow
+            "enum_doc": [],
             "const_doc": [],
+            "export_var": [],
             "var_doc": [],
+            "onready_var": [],
             "func_doc": [],
             "inner_class_doc": [],
-
         }
         if from_project:
             fp_script = self.doc_conf_data["project_scan_options"]["src_path"] + script
         else:
             fp_script = script
         try:
-            with open(fp_script, "r") as file:
+            with (open(fp_script, "r") as file):
                 for line in file:
+                    if scan_stage == "":
+                        if line.strip().startswith("##"):
+                            description_helper = line.replace("##", "", 1).strip()
+                            if not description_helper.replace("#", "").strip() == "":
+                                scan_stage = "brief_description"
+                                if description_helper.startswith("@tutorial"):
+                                    description_helper = description_helper.split(":", 1)
+                                    description_helper[1] = description_helper[1].strip()
+                                    if "(" in description_helper[0]:
+                                        if description_helper[0].endswith(")"):
+                                            tmp_list = description_helper[0].split("(", 1)
+                                            if tmp_list[0] == "@tutorial":
+                                                description_helper[0] = "@tutorial:"
+                                                description_helper.append(tmp_list[1].strip(")"))
+                                            else:
+                                                print(f"{line}: invalid @tutorial tag, skipping")
+                                                continue
+                                        else:
+                                            print(f"{line}: invalid @tutorial tag, skipping")
+                                            continue
+                                    tag_to_append = [description_helper[0], description_helper[1]]
+                                    if len(description_helper) > 2:
+                                        tag_to_append.append(description_helper[2])
+                                    if description_helper[0].endswith(":") and self.check_url(description_helper[1]):
+                                        tmp_tags.append(tag_to_append)
+                                    else:
+                                        print(f"{line}: invalid @tutorial tag or URL, skipping")
+                                        continue
+                                if description_helper.startswith("@deprecated"):
+                                    tmp_tags.append("@deprecated")
+                                if description_helper.startswith("@experimental"):
+                                    tmp_tags.append("@experimental")
+                                else:
+                                    tmp_brief_description = description_helper
+                            continue
+                        if line.strip().startswith("#"):
+                            continue
+                        if "##" in line:
+                            if line.strip().startswith("signal"):
 
-                    pass
+                                continue
+                            if line.strip().startswith("enum"):
+                                # todo: caution enum: special case!
+
+                                continue
+                            if line.strip().startswith("const"):
+
+                                continue
+                            if line.strip().startswith("@export var"):
+
+                                continue
+                            if line.strip().startswith("var"):
+
+                                continue
+                            if line.strip().startswith("@onready var"):
+
+                                continue
+                            if line.strip().startswith("func"):
+
+                                continue
+                            if line.strip().startswith("class"):
+
+                                continue
+                        if "class_name" in line:
+                            if line.startswith("class_name"):
+                                class_name_helper = line.replace("class_name", "").strip()
+                            else:
+                                class_name_helper = line.split("class_name", 1)[1].strip()
+                            class_name_helper = class_name_helper.split(" ", 1)[0]
+                            class_doc["class_name"] = class_name_helper
+                        if "extends" in line:
+                            if line.startswith("extends"):
+                                extends_helper = line.replace("extends", "").strip()
+                            else:
+                                extends_helper = line.split("extends", 1)[1].strip()
+                            extends_helper = extends_helper.split(" ", 1)[0]
+                            class_doc["extends"] = extends_helper
+                        continue
+                    if scan_stage == "brief_description":
+                        if line.strip().startswith("##"):
+                            description_helper = line.replace("##", "", 1).strip()
+                            if not description_helper.replace("#", "").strip() == "":
+                                tmp_brief_description += " " + description_helper
+                            else:
+                                scan_stage = "detail_description"
+                            continue
+                    if scan_stage == "detail_description":
+                        if line.strip().startswith("##"):
+                            description_helper = line.replace("##", "", 1).strip()
+                            if not description_helper.replace("#", "").strip() == "":
+                                if description_helper.startswith("@tutorial"):
+                                    description_helper = description_helper.split(":", 1)
+                                    description_helper[1] = description_helper[1].strip()
+                                    if "(" in description_helper[0]:
+                                        if description_helper[0].endswith(")"):
+                                            tmp_list = description_helper[0].split("(", 1)
+                                            if tmp_list[0] == "@tutorial":
+                                                description_helper[0] = "@tutorial:"
+                                                description_helper.append(tmp_list[1].strip(")"))
+                                            else:
+                                                print(f"{line}: invalid @tutorial tag, skipping")
+                                                continue
+                                        else:
+                                            print(f"{line}: invalid @tutorial tag, skipping")
+                                            continue
+                                    tag_to_append = [description_helper[0], description_helper[1]]
+                                    if len(description_helper) > 2:
+                                        tag_to_append.append(description_helper[2])
+                                    if description_helper[0].endswith(":") and self.check_url(description_helper[1]):
+                                        tmp_tags.append(tag_to_append)
+                                        continue
+                                    else:
+                                        print(f"{line}: invalid @tutorial tag, skipping")
+                                        continue
+                                    pass
+                                if description_helper.startswith("@deprecated"):
+                                    tmp_tags.append("@deprecated")
+                                    continue
+                                if description_helper.startswith("@experimental"):
+                                    tmp_tags.append("@experimental")
+                                    continue
+                                else:
+                                    if tmp_detail_description != "":
+                                        description_helper = " " + description_helper
+                                    tmp_detail_description += description_helper
+                                    continue
+                            else:
+                                tmp_detail_description += "\n\n"
+                                continue
+                    if scan_stage == "brief_description" or scan_stage == "detail_description":
+                        if not line.strip().startswith("##"):
+                            if line.strip().startswith("#"):
+                                continue
+                            if line.strip().startswith("signal"):
+
+                                continue
+                            if line.strip().startswith("enum"):
+                                # todo: caution enum: special case!
+
+                                continue
+                            if line.strip().startswith("const"):
+
+                                continue
+                            if line.strip().startswith("@export var"):
+
+                                continue
+                            if line.strip().startswith("var"):
+
+                                continue
+                            if line.strip().startswith("@onready var"):
+
+                                continue
+                            if line.strip().startswith("func"):
+
+                                continue
+                            if line.strip().startswith("class"):
+
+                                continue
+                            # todo: might be class docstring if nothing of the above
+
         except Exception as e:
 
             # todo: broader exception handling
             print(e)
             pass
+
+    @staticmethod
+    def check_url(url_to_check: str):
+        if url(url_to_check):
+            if url_to_check.startswith("http://") or url_to_check.startswith("https://"):
+                return True
+        return False
+
