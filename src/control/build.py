@@ -553,7 +553,16 @@ class Build:
             pass
 
     @staticmethod
-    def check_url(url_to_check: str):
+    def check_url(url_to_check: str) -> bool:
+        """
+        Checks the pattern of an HTTP(S) URL address. Doesn't check if address exists.
+
+        Args:
+            url_to_check: URL address to check
+
+        Returns:
+            True if HTTP(S) URL address pattern is valid, otherwise False
+        """
         if url(url_to_check):
             if url_to_check.startswith("http://") or url_to_check.startswith("https://"):
                 return True
