@@ -7,6 +7,8 @@ from validators import url
 
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
+from src.model.class_doc import ClassDoc
+
 
 class Build:
     """
@@ -350,7 +352,7 @@ class Build:
         """
         pass
 
-    def script_scanner(self, script: str, from_project: bool = True):
+    def script_scanner(self, script: str, from_project: bool = True) -> ClassDoc:
         """
         Scans docstrings from script, registering docstring class, signal, enum, enum values, const, var, func, and
         inner class categories
@@ -361,24 +363,14 @@ class Build:
             script: Path to the script to read from
             from_project: If True, the path of the script is relative to the project root (src_path)
         """
-        scan_stage: str = ""
+        scan_stage: str = ""  # "", "brief_description", "detail_description", "args", "returns", todo: enum, func
         tmp_brief_description = ""
         tmp_detail_description = ""
-        tmp_tags = []
-        class_doc: dict = {
-            "class_name": "not exposed",
-            "extends": "",
-            "brief_description": "",
-            "detail_description": "",
-            "signal_doc": [],
-            "enum_doc": [],
-            "const_doc": [],
-            "export_var": [],
-            "var_doc": [],
-            "onready_var": [],
-            "func_doc": [],
-            "inner_class_doc": [],
-        }
+        tmp_attribute_description = []  # [name, type, description, value]
+        tmp_args_description = []  # [name, type, description, value/default/required]
+        tmp_returns_description = []  # [type, description]
+        tmp_tags = []  # [tyg_type, (only if tag=@tutorial --> url, not required tutorial_name]
+        class_doc = ClassDoc(script)
         if from_project:
             fp_script = self.doc_conf_data["project_scan_options"]["src_path"] + script
         else:
@@ -455,14 +447,14 @@ class Build:
                             else:
                                 class_name_helper = line.split("class_name", 1)[1].strip()
                             class_name_helper = class_name_helper.split(" ", 1)[0]
-                            class_doc["class_name"] = class_name_helper
+                            class_doc.set_class_name(class_name_helper)
                         if "extends" in line:
                             if line.startswith("extends"):
                                 extends_helper = line.replace("extends", "").strip()
                             else:
                                 extends_helper = line.split("extends", 1)[1].strip()
                             extends_helper = extends_helper.split(" ", 1)[0]
-                            class_doc["extends"] = extends_helper
+                            class_doc.set_extends(extends_helper)
                         continue
                     if scan_stage == "brief_description":
                         if line.strip().startswith("##"):
@@ -474,7 +466,14 @@ class Build:
                             continue
                     if scan_stage == "detail_description":
                         if line.strip().startswith("##"):
-                            description_helper = line.replace("##", "", 1).strip()
+                            description_helper = line.replace("##", "", 1)
+                            if description_helper.strip().startswith("Args:"):
+                                scan_stage = "args"
+                                continue
+                            if description_helper.strip().startswith("Returns:"):
+                                scan_stage = "returns"
+                                continue
+                            description_helper = description_helper.strip()
                             if not description_helper.replace("#", "").strip() == "":
                                 if description_helper.startswith("@tutorial"):
                                     description_helper = description_helper.split(":", 1)
@@ -545,12 +544,18 @@ class Build:
 
                                 continue
                             # todo: might be class docstring if nothing of the above
+                    if scan_stage == "args":
 
+                        continue
+                    if scan_stage == "returns":
+
+                        continue
         except Exception as e:
 
             # todo: broader exception handling
             print(e)
             pass
+        return class_doc
 
     @staticmethod
     def check_url(url_to_check: str) -> bool:
@@ -567,4 +572,3 @@ class Build:
             if url_to_check.startswith("http://") or url_to_check.startswith("https://"):
                 return True
         return False
-
