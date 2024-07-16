@@ -368,7 +368,6 @@ class Build:
         scan_stage: str = ""  # "", "brief_description", "detail_description", "args", "returns", todo: enum, func
         tmp_brief_description = ""
         tmp_detail_description = ""
-        tmp_attribute_description = []  # [name, type, description, value]
         tmp_args_description = []  # [name, type, description, value/default/required]
         tmp_returns_description = []  # [type, description]
         tmp_tags = []  # [tyg_type, (only if tag=@tutorial --> url, not required tutorial_name]
@@ -579,15 +578,65 @@ class Build:
                                 class_doc.add_attribute(
                                     const_name, const_data_type, const_description, const_value, var_type, const_tags
                                 )
+                                scan_stage = ""
+                                tmp_brief_description = ""
+                                tmp_detail_description = ""
+                                tmp_tags = []
                                 continue
-                            if line.strip().startswith("@export var"):
-
+                            if line.strip().startswith("@export var") \
+                                    or line.strip().startswith("var") \
+                                    or line.strip().startswith("@onready var"):
+                                if "#" in line:
+                                    line = line.split("#", 1)[0].strip()
+                                if line.strip().startswith("@export var"):
+                                    var_type = "@export var"
+                                if line.strip().startswith("var"):
+                                    var_type = "var"
+                                if line.strip().startswith("@onready var"):
+                                    var_type = "@onready var"
+                                var_value = None
+                                var_data_type = "undefined"
+                                if "=" in line:
+                                    line, var_value = line.split("=", 1)
+                                    var_value = var_value.strip()
+                                    line = line.strip()
+                                if ":=" in line:
+                                    line, var_value = line.split(":=", 1)
+                                    var_value = var_value.strip()
+                                    line = line.strip()
+                                if ":" in line:
+                                    line, var_data_type = line.split(":", 1)
+                                    var_data_type = var_data_type.strip()
+                                    line = line.strip()
+                                var_name = line.replace("var", "", 1).strip()
+                                var_name = var_name.replace("@onready", "", 1).strip()
+                                var_name = var_name.replace("@export", "", 1).strip()
+                                var_description = tmp_brief_description
+                                if tmp_detail_description != "":
+                                    var_description = var_description + "\n\n" + tmp_detail_description
+                                var_tags: list[TagDoc] = []
+                                for tag in tmp_tags:
+                                    tutorial_url = ""
+                                    tutorial_name = ""
+                                    tag_type = tag[0]
+                                    if len(tag) > 1:
+                                        tutorial_url = tag[1]
+                                    if len(tag) > 2:
+                                        tutorial_name = tag[2]
+                                    var_tags.append(TagDoc(tag_type, tutorial_url, tutorial_name))
+                                class_doc.add_attribute(
+                                    var_name, var_data_type, var_description, var_value, var_type, var_tags
+                                )
+                                scan_stage = ""
+                                tmp_brief_description = ""
+                                tmp_detail_description = ""
+                                tmp_tags = []
                                 continue
-                            if line.strip().startswith("var"):
-
+                            if line.strip().startswith("@export"):
+                                scan_stage = "@export"
                                 continue
-                            if line.strip().startswith("@onready var"):
-
+                            if line.strip().startswith("@onready"):
+                                scan_stage = "@onready"
                                 continue
                             if line.strip().startswith("func"):
 
@@ -595,7 +644,58 @@ class Build:
                             if line.strip().startswith("class"):
 
                                 continue
-                            # todo: might be class docstring if nothing of the above
+                            # todo: should be class docstring if nothing of the above
+                    if scan_stage == "@export" or scan_stage == "@onready":
+                        if scan_stage == "@export":
+                            if not line.strip().startswith("var"):
+                                print("Warning: @export is not followed by var, ignoring ...")
+                                continue
+                            else:
+                                var_type = "@export var"
+                        if scan_stage == "@onready":
+                            if not line.strip().startswith("var"):
+                                print("Warning: @onready is not followed by var, ignoring ...")
+                                continue
+                            else:
+                                var_type = "@onready var"
+                        var_value = None
+                        var_data_type = "undefined"
+                        if "=" in line:
+                            line, var_value = line.split("=", 1)
+                            var_value = var_value.strip()
+                            line = line.strip()
+                        if ":=" in line:
+                            line, var_value = line.split(":=", 1)
+                            var_value = var_value.strip()
+                            line = line.strip()
+                        if ":" in line:
+                            line, var_data_type = line.split(":", 1)
+                            var_data_type = var_data_type.strip()
+                            line = line.strip()
+                        var_name = line.replace("var", "", 1).strip()
+                        var_name = var_name.replace("@onready", "", 1).strip()
+                        var_name = var_name.replace("@export", "", 1).strip()
+                        var_description = tmp_brief_description
+                        if tmp_detail_description != "":
+                            var_description = var_description + "\n\n" + tmp_detail_description
+                        var_tags: list[TagDoc] = []
+                        for tag in tmp_tags:
+                            tutorial_url = ""
+                            tutorial_name = ""
+                            tag_type = tag[0]
+                            if len(tag) > 1:
+                                tutorial_url = tag[1]
+                            if len(tag) > 2:
+                                tutorial_name = tag[2]
+                            var_tags.append(TagDoc(tag_type, tutorial_url, tutorial_name))
+                        class_doc.add_attribute(
+                            var_name, var_data_type, var_description, var_value, var_type, var_tags
+                        )
+                        scan_stage = ""
+                        tmp_brief_description = ""
+                        tmp_detail_description = ""
+                        tmp_tags = []
+                        continue
                     if scan_stage == "args":
 
                         continue
