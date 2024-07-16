@@ -554,7 +554,6 @@ class Build:
 
             # todo: broader exception handling
             print(e)
-            pass
         return class_doc
 
     @staticmethod

@@ -1,3 +1,4 @@
+from src.model.tag_doc import TagDoc
 
 
 class EnumMemberDoc:
@@ -15,5 +16,6 @@ class EnumMemberDoc:
         """
 
         self.value_name = value_name
+        self.tags: list[TagDoc] = []
         self.value_int = value_int
         self.description = description
