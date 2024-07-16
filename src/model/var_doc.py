@@ -26,3 +26,8 @@ class VarDoc:
         self.description: str = description
         self.value = value
         self.var_type: str = var_type
+        if self.var_type != "const" \
+                or self.var_type != "export_var" \
+                or self.var_type != "var" \
+                or self.var_type != "onready_var":
+            raise Exception('Only "const", "export_var", "var" or "onready_var" are valid var types')

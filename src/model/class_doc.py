@@ -16,6 +16,9 @@ class ClassDoc:
             file_name: Filename of the script
             class_name: Class name, only needed to expose class for inheritance or for inner classes
             inner_class: Is it an inner class? class_name becomes mandatory if True.
+
+        Raises:
+            Exception: If inner class True without or with invalid class_name
         """
         self.file_name: str = file_name
         self.class_name: str = class_name
@@ -29,6 +32,8 @@ class ClassDoc:
         self.const_docs: list[VarDoc] = []
         self.func_docs: list[FuncDoc] = []
         self.inner_class_docs: list[ClassDoc] = []
+        if self.inner_class_docs and (self.class_name == "not exposed" or " " in self.class_name):
+            raise Exception("Inner classes needs to be named, no spaces allowed")
 
     def set_class_name(self, class_name: str):
         self.class_name = class_name

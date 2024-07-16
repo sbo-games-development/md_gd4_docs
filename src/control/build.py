@@ -3,7 +3,6 @@ from os.path import isdir, isfile, join
 from os import walk
 from fnmatch import filter
 from validators import url
-# from urllib.parse import urlparse
 
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
@@ -18,6 +17,7 @@ class Build:
         doc_conf_data: The deserialized settings for reading the sourcecode
         doc_conf_file: Path to the documentation config file
         gd_project: For information extracted from project.godot file
+        doc_data: For information extracted from script files classes
         script_files: A dictionary with information for all script files in the project and/or in the filelist_scan
             scan_list
         scene_files: A list for all scene files of the project
@@ -79,6 +79,7 @@ class Build:
             },
             "autoload": []
         }
+        self.doc_data: list[ClassDoc] = []
         self.script_files: dict = {}
         self.scene_files: list = []
         self.check_doc_conf_data()
@@ -348,7 +349,7 @@ class Build:
 
     def scan_filelist_scripts(self):
         """
-        ToDo!
+        ToDo! Or not needed?
         """
         pass
 
