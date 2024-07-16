@@ -15,9 +15,8 @@ class SignalDoc:
             tags: Tag(s) of the signal, if any
         """
         self.name: str = name
-        self.description: str = description
         if tags is None:
             self.tags: list[TagDoc] = []
         else:
             self.tags: list[TagDoc] = tags
-
+        self.description: str = description

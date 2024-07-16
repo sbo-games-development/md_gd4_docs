@@ -6,7 +6,7 @@ class FuncDoc:
     """
     Model class for holding documentation for functions
     """
-    def __init__(self, name: str, description: str, args: list[VarDoc]):
+    def __init__(self, name: str, description: str, args: list[VarDoc], tags: list[TagDoc] = None):
         """
         Constructor of the function documentation model.
 
@@ -16,6 +16,9 @@ class FuncDoc:
             args: Argument(s) list of the function
         """
         self.name = name
-        self.tags: list[TagDoc] = []
+        if tags is None:
+            self.tags: list[TagDoc] = []
+        else:
+            self.tags: list[TagDoc] = tags
         self.description = description
         self.args = args

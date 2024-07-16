@@ -5,7 +5,7 @@ class EnumMemberDoc:
     """
     Model class for storing enum members
     """
-    def __init__(self, value_name: str, value_int: int, description: str):
+    def __init__(self, value_name: str, value_int: int, description: str, tags: list[TagDoc] = None):
         """
         Constructor of the enum member documentation model
 
@@ -16,6 +16,9 @@ class EnumMemberDoc:
         """
 
         self.value_name = value_name
-        self.tags: list[TagDoc] = []
         self.value_int = value_int
+        if tags is None:
+            self.tags: list[TagDoc] = []
+        else:
+            self.tags: list[TagDoc] = tags
         self.description = description

@@ -60,7 +60,7 @@ nav:
       - class_doc.py: src/model/class_doc.md
       - signal_doc.py: src/model.signal_doc.md
       - enum_doc.py: src/model/enum_doc.md
-      - enum_member_doc: src/model/enum_member_doc.md
+      - enum_member_doc.py: src/model/enum_member_doc.md
       - var_doc.py: src/model/var_doc.md
       - func_doc.py: src/model/func_doc.md
       - tag_doc.py: src/model/tag_doc.md
