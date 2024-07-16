@@ -7,6 +7,7 @@ from validators import url
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from src.model.class_doc import ClassDoc
+from src.model.tag_doc import TagDoc
 
 
 class Build:
@@ -520,14 +521,64 @@ class Build:
                             if line.strip().startswith("#"):
                                 continue
                             if line.strip().startswith("signal"):
-
+                                if "#" in line:
+                                    line = line.split("#", 1)[0]
+                                signal_name = line.replace("signal", "", 1).strip()
+                                signal_description = tmp_brief_description
+                                if tmp_detail_description != "":
+                                    signal_description = signal_description + "\n\n" + tmp_detail_description
+                                signal_tags: list[TagDoc] = []
+                                for tag in tmp_tags:
+                                    tutorial_url = ""
+                                    tutorial_name = ""
+                                    tag_type = tag[0]
+                                    if len(tag) > 1:
+                                        tutorial_url = tag[1]
+                                    if len(tag) > 2:
+                                        tutorial_name = tag[2]
+                                    signal_tags.append(TagDoc(tag_type, tutorial_url, tutorial_name))
+                                class_doc.add_signal(signal_name, signal_description, signal_tags)
+                                scan_stage = ""
+                                tmp_brief_description = ""
+                                tmp_detail_description = ""
+                                tmp_tags = []
                                 continue
                             if line.strip().startswith("enum"):
                                 # todo: caution enum: special case!
 
                                 continue
                             if line.strip().startswith("const"):
-
+                                var_type = "const"
+                                const_value = None
+                                const_data_type = "undefined"
+                                line = line.strip()
+                                if "#" in line:
+                                    line = line.split("#", 1)[0].strip()
+                                if "=" in line:
+                                    line, const_value = line.split("=", 1)
+                                    const_value = const_value.strip()
+                                    line = line.strip()
+                                if ":" in line:
+                                    line, const_data_type = line.split(":", 1)
+                                    const_data_type = const_data_type.strip()
+                                    line = line.strip()
+                                const_name = line.replace("const", "", 1).strip()
+                                const_description = tmp_brief_description
+                                if tmp_detail_description != "":
+                                    const_description = const_description + "\n\n" + tmp_brief_description
+                                const_tags: list[TagDoc] = []
+                                for tag in tmp_tags:
+                                    tutorial_url = ""
+                                    tutorial_name = ""
+                                    tag_type = tag[0]
+                                    if len(tag) > 1:
+                                        tutorial_url = tag[1]
+                                    if len(tag) > 2:
+                                        tutorial_name = tag[2]
+                                    const_tags.append(TagDoc(tag_type, tutorial_url, tutorial_name))
+                                class_doc.add_attribute(
+                                    const_name, const_data_type, const_description, const_value, var_type, const_tags
+                                )
                                 continue
                             if line.strip().startswith("@export var"):
 

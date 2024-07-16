@@ -4,7 +4,7 @@ class TagDoc:
     """
     Model class for holding documentation for tags
     """
-    def __init__(self, tag_type: str, description: str, tutorial_url: str = "", tutorial_name: str = ""):
+    def __init__(self, tag_type: str, tutorial_url: str = "", tutorial_name: str = ""):
         """
         Constructor of the tag documentation model.
 
@@ -19,7 +19,6 @@ class TagDoc:
         self.tag_type = tag_type
         self.tutorial_url = tutorial_url
         self.tutorial_name = tutorial_name
-        self.description = description
         if self.tag_type != "@tutorial" \
                 or self.tag_type != "@experimental" \
                 or self.tag_type != "@deprecated":

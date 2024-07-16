@@ -6,7 +6,15 @@ class VarDoc:
     Model class for holding documentation for a var or const.
     """
 
-    def __init__(self, name: str, data_type: str, description: str, value, var_type: str = "var", tags: list[TagDoc] = None):
+    def __init__(
+            self,
+            name: str,
+            data_type: str,
+            description: str,
+            value=None,
+            var_type: str = "var",
+            tags: list[TagDoc] = None
+    ):
         """
         Constructor of the const documentation model.
 
@@ -16,6 +24,7 @@ class VarDoc:
             description: Description of the const
             value: Should have data type as mentioned in data_type
             var_type: Could be "const", "export_var", "var" or "onready_var"
+            tags: Tag(s) of the signal, if any
         """
         self.name: str = name
         self.data_type: str = data_type
