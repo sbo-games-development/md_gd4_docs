@@ -346,7 +346,7 @@ class Build:
         Initiates scans of docstrings for all scripts in the project
         """
         for script in self.script_files:
-            self.script_scanner(script)
+            self.doc_data.append(self.script_scanner(script))
 
     def scan_filelist_scripts(self):
         """
@@ -418,23 +418,75 @@ class Build:
                             continue
                         if "##" in line:
                             if line.strip().startswith("signal"):
-
+                                com, doc = line.split("##", 1)
+                                signal_name = com.replace("signal", "", 1).strip()
+                                signal_description = doc.strip()
+                                class_doc.add_signal(signal_name, signal_description)
+                                scan_stage = ""
+                                tmp_brief_description = ""
+                                tmp_detail_description = ""
+                                tmp_tags = []
                                 continue
                             if line.strip().startswith("enum"):
                                 # todo: caution enum: special case!
 
                                 continue
                             if line.strip().startswith("const"):
-
+                                var_type = "const"
+                                const_value = None
+                                const_data_type = "undefined"
+                                com, doc = line.split("##", 1)
+                                const_description = doc.strip()
+                                if "=" in com:
+                                    com, const_value = com.split("=", 1)
+                                    const_value = const_value.strip()
+                                    com = com.strip()
+                                if ":=" in com:
+                                    com, const_value = com.split("=", 1)
+                                    const_value = const_value.strip()
+                                    com = com.strip()
+                                if ":" in com:
+                                    com, const_data_type = com.split(":", 1)
+                                    const_data_type = const_data_type.strip()
+                                    com = com.strip()
+                                const_name = com.replace("const", "", 1).strip
+                                class_doc.add_attribute(
+                                    const_name, const_data_type, const_description, const_value, const_data_type
+                                )
+                                scan_stage = ""
+                                tmp_brief_description = ""
+                                tmp_detail_description = ""
+                                tmp_tags = []
                                 continue
-                            if line.strip().startswith("@export var"):
-
-                                continue
-                            if line.strip().startswith("var"):
-
-                                continue
-                            if line.strip().startswith("@onready var"):
-
+                            if line.strip().startswith("@export var") \
+                                    or line.strip().startswith("var") \
+                                    or line.strip().startswith("@onready var"):
+                                if line.strip().startswith("@export var"):
+                                    var_type = "@export var"
+                                if line.strip().startswith("var"):
+                                    var_type = "var"
+                                if line.strip().startswith("@onready var"):
+                                    var_type = "@onready var"
+                                var_value = None
+                                var_data_type = "undefined"
+                                com, doc = line.split("##", 1)
+                                var_description = doc.strip()
+                                if "=" in com:
+                                    com, var_value = com.split("=", 1)
+                                    var_value = var_value.strip()
+                                    com = com.strip()
+                                if ":=" in com:
+                                    com, var_value = com.split("=", 1)
+                                    var_value = var_value.strip()
+                                    com = com.strip()
+                                if ":" in com:
+                                    com, var_data_type = com.split(":", 1)
+                                    var_data_type = var_data_type.strip()
+                                    com = com.strip()
+                                var_name = com.replace("var", 1).strip()
+                                var_name = com.replace("@onready", 1).strip()
+                                var_name = com.replace("@export", 1).strip()
+                                class_doc.add_attribute(var_name, var_data_type, var_description, var_value, var_type)
                                 continue
                             if line.strip().startswith("func"):
 
@@ -600,7 +652,7 @@ class Build:
                                     line, var_value = line.split("=", 1)
                                     var_value = var_value.strip()
                                     line = line.strip()
-                                if ":=" in line:
+                                elif ":=" in line:
                                     line, var_value = line.split(":=", 1)
                                     var_value = var_value.strip()
                                     line = line.strip()
