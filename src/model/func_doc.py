@@ -15,6 +15,7 @@ class FuncDoc:
             description: Description of the function
             args: Argument(s) list of the function
         """
+        self.code: str = ""
         self.name = name
         if tags is None:
             self.tags: list[TagDoc] = []
@@ -22,3 +23,6 @@ class FuncDoc:
             self.tags: list[TagDoc] = tags
         self.description = description
         self.args = args
+
+    def append_code_line(self, line: str):
+        self.code = self.code + line

@@ -30,7 +30,8 @@ class Settings:
             "scan_list": [
                 "./file1.gd",
                 "./file2.gd"
-            ]
+            ],
+            "indent": "tabulator"
         }
         self.yaml: YAML = YAML()
         print("Application settings initialized.")

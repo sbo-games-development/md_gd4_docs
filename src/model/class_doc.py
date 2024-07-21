@@ -1,3 +1,4 @@
+from src.model.enum_member_doc import EnumMemberDoc
 from src.model.signal_doc import SignalDoc
 from src.model.enum_doc import EnumDoc
 from src.model.var_doc import VarDoc
@@ -21,6 +22,7 @@ class ClassDoc:
         Raises:
             Exception: If inner class True without or with invalid class_name
         """
+        self.code: str = ""
         self.file_name: str = file_name
         self.class_name: str = class_name
         self.is_inner_class: bool = inner_class
@@ -57,11 +59,21 @@ class ClassDoc:
         """
         self.signal_docs.append(SignalDoc(name, description, tags))
 
-    def add_enum(self):
+    def add_enum(self, name: str, description: str, members: list[EnumMemberDoc], tags: list[TagDoc] = None):
         """
-        todo!
-        """
+        Adds an enum item to the doc
 
+        Args:
+            name: Name of the enum
+            description: Description of the enum
+            members: All members of the enum, also these without description
+            tags: Tag(s) of the enum, if any
+        """
+        self.enum_docs.append(EnumDoc(name, description, members, tags))
+        if tags is None:
+            self.tags: list[TagDoc] = []
+        else:
+            self.tags: list[TagDoc] = tags
         pass
 
     def add_attribute(
@@ -88,3 +100,6 @@ class ClassDoc:
             self.const_docs.append(VarDoc(name, data_type, description, value, var_type, tags))
         else:
             self.var_docs.append(VarDoc(name, data_type, description, value, var_type, tags))
+
+    def append_code_line(self, line: str):
+        self.code = self.code + line

@@ -72,6 +72,7 @@ class Build:
         """
         self.doc_conf_data: CommentedMap = doc_conf_data
         self.doc_conf_file: str = doc_conf_file
+        self.indent: str = "tabulator"
         self.gd_project: dict = {
             "project_name": "",
             "godot_version": "",
@@ -101,6 +102,22 @@ class Build:
         # todo: point to according chapter/subsite in error msgs urls?
         print("Checking settings correctness before reading & building ...")
         # print(self.doc_conf_data)
+        if "indent" in self.doc_conf_data:
+            self.indent: str = self.doc_conf_data["indent"]
+            if self.indent != "tabulator":
+                if not self.indent.startswith("spaces:"):
+                    print("Indent setting has to be either tabulator or spaces:number_of_spaces")
+                    exit(5)
+                else:
+                    try:
+                        number = int(self.indent.split(":", 1)[1].strip())
+                        if not (2 <= number >= 12):
+                            print("Indent spaces value error, only numbers between 2 and 12 are allowed")
+                            exit(5)
+                    except Exception as e:
+                        print(e)
+                        print('Indent spaces value error, only numbers are allowed after "spaces:"')
+                        exit(5)
         if "doc_destination" not in self.doc_conf_data or self.doc_conf_data["doc_destination"] == "" \
                 or not isinstance(self.doc_conf_data["doc_destination"], str):
             print(f"doc_destination not set in {self.doc_conf_file}, empty or wrong type")
@@ -380,6 +397,7 @@ class Build:
         try:
             with (open(fp_script, "r") as file):
                 for line in file:
+                    class_doc.append_code_line(line)
                     if scan_stage == "":
                         if line.strip().startswith("##"):
                             description_helper = line.replace("##", "", 1).strip()
@@ -416,6 +434,7 @@ class Build:
                                     tmp_brief_description = description_helper
                             continue
                         if line.strip().startswith("#"):
+                            #
                             continue
                         if line.strip().startswith("@export"):
                             scan_stage = "@export"
@@ -445,12 +464,32 @@ class Build:
                                 tmp_enum_members: list[enum_members] = []
                                 if com.endswith("}"):
                                     if "{" in com:
-                                        # todo: get enum members before enum_name and add to doc
-
+                                        com, members = com.split("{", 1)
+                                        com = com.strip
+                                        members = members.rstrip("}").strip()
+                                        for member in members:
+                                            if "=" in com:
+                                                enum_member_value_name, enum_member_value_int = com.split("=")
+                                                enum_member_value_name = enum_member_value_name.strip()
+                                                enum_member_value_int = enum_member_value_int.strip()
+                                            else:
+                                                enum_member_value_name = com.strip()
+                                                if len(tmp_enum_members) < 1:
+                                                    enum_member_value_int = 0
+                                                else:
+                                                    enum_member_value_int = tmp_enum_members[-1].value_int + 1
+                                            tmp_enum_members.append(
+                                                EnumMemberDoc(enum_member_value_name, enum_member_value_int)
+                                            )
+                                        class_doc.add_enum(enum_name, enum_description, tmp_enum_members)
+                                        scan_stage = ""
+                                        tmp_brief_description = ""
+                                        tmp_detail_description = ""
+                                        tmp_tags = []
+                                        tmp_enum_members = []
                                         continue
                                     else:
-                                        # todo: enum parenthesis error
-
+                                        print(f"Parenthesis error in line {line}, ignoring.")
                                         continue
                                 enum_name = com.replace("enum", "", 1).strip()
                                 continue
@@ -593,6 +632,7 @@ class Build:
                     if scan_stage == "brief_description" or scan_stage == "detail_description":
                         if not line.strip().startswith("##"):
                             if line.strip().startswith("#"):
+                                #
                                 continue
                             if line.strip().startswith("signal"):
                                 if "#" in line:
@@ -833,9 +873,22 @@ class Build:
                             EnumMemberDoc(enum_member_value_name, enum_member_value_int, enum_member_description)
                         )
                         if line.endswith("}"):
-                            # todo: add enum with members to doc
-
-                            pass
+                            enum_tags: list[TagDoc] = []
+                            for tag in tmp_tags:
+                                tutorial_url = ""
+                                tutorial_name = ""
+                                tag_type = tag[0]
+                                if len(tag) > 1:
+                                    tutorial_url = tag[1]
+                                if len(tag) > 2:
+                                    tutorial_name = tag[2]
+                                enum_tags.append(TagDoc(tag_type, tutorial_url, tutorial_name))
+                            class_doc.add_enum(enum_name, enum_description, tmp_enum_members, enum_tags)
+                            scan_stage = ""
+                            tmp_brief_description = ""
+                            tmp_detail_description = ""
+                            tmp_tags = []
+                            tmp_enum_members = []
                         continue
                     if scan_stage == "args":
 
@@ -864,3 +917,24 @@ class Build:
             if url_to_check.startswith("http://") or url_to_check.startswith("https://"):
                 return True
         return False
+
+    def count_indent(self, line: str) -> int:
+        """
+        Counts indents of a text line. Indent type is specified in self.indent "read from md_gd4_docs.yml" and are
+        either tabulators or spaces:numer_of_spaces between 2 and 12
+
+        Args:
+            line: The str to count indent of
+
+        Returns:
+            Number of indents, -1 if invalid spaces indent number
+        """
+        if self.indent == "tabulator":
+            indent_count = len(line) - len(line.lstrip("\t"))
+        else:
+            number = int(self.indent.split(":", 1)[1].strip())
+            if self.indent % number == 0:
+                indent_count = (len(line) - len(line.lstrip(" "))) / number
+            else:
+                indent_count = -1
+        return indent_count
