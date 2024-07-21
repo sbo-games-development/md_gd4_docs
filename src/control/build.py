@@ -7,6 +7,7 @@ from validators import url
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
 from src.model.class_doc import ClassDoc
+from src.model.enum_member_doc import EnumMemberDoc
 from src.model.tag_doc import TagDoc
 
 
@@ -416,6 +417,12 @@ class Build:
                             continue
                         if line.strip().startswith("#"):
                             continue
+                        if line.strip().startswith("@export"):
+                            scan_stage = "@export"
+                            continue
+                        if line.strip().startswith("@onready"):
+                            scan_stage = "@onready"
+                            continue
                         if "##" in line:
                             if line.strip().startswith("signal"):
                                 com, doc = line.split("##", 1)
@@ -428,8 +435,24 @@ class Build:
                                 tmp_tags = []
                                 continue
                             if line.strip().startswith("enum"):
-                                # todo: caution enum: special case!
+                                scan_stage = "enum"
+                                com, doc = line.split("##", 1)
+                                enum_name = ""
+                                enum_description = doc.strip()
+                                com = com.strip()
+                                if com.endswith("{"):
+                                    com = com.replace("{", "").strip()
+                                tmp_enum_members: list[enum_members] = []
+                                if com.endswith("}"):
+                                    if "{" in com:
+                                        # todo: get enum members before enum_name and add to doc
 
+                                        continue
+                                    else:
+                                        # todo: enum parenthesis error
+
+                                        continue
+                                enum_name = com.replace("enum", "", 1).strip()
                                 continue
                             if line.strip().startswith("const"):
                                 var_type = "const"
@@ -484,8 +507,8 @@ class Build:
                                     var_data_type = var_data_type.strip()
                                     com = com.strip()
                                 var_name = com.replace("var", 1).strip()
-                                var_name = com.replace("@onready", 1).strip()
-                                var_name = com.replace("@export", 1).strip()
+                                var_name = var_name.replace("@onready", 1).strip()
+                                var_name = var_name.replace("@export", 1).strip()
                                 class_doc.add_attribute(var_name, var_data_type, var_description, var_value, var_type)
                                 continue
                             if line.strip().startswith("func"):
@@ -595,8 +618,15 @@ class Build:
                                 tmp_tags = []
                                 continue
                             if line.strip().startswith("enum"):
-                                # todo: caution enum: special case!
-
+                                scan_stage = "enum"
+                                enum_name = ""
+                                if "#" in line:
+                                    line = line.split("#", 1)[0]
+                                line = line.strip()
+                                if line.endswith("{"):
+                                    line = line.replace("{", "").strip()
+                                enum_name = line.replace("enum", "", 1).strip()
+                                enum_members: list[enum_members] = []
                                 continue
                             if line.strip().startswith("const"):
                                 var_type = "const"
@@ -747,6 +777,65 @@ class Build:
                         tmp_brief_description = ""
                         tmp_detail_description = ""
                         tmp_tags = []
+                        continue
+                    if scan_stage == "enum":
+                        line = line.strip()
+                        if "#" in line and "##" not in line:
+                            line = line.split("#", 1)[0].strip()
+                        if line == "{" or line == "":
+                            continue
+                        if line.startswith("##"):
+                            line = line.replace("##", "").strip()
+                            if "enum_member_tmp_description" in locals():
+                                if enum_member_description != "" or enum_member_description is not None:
+                                    enum_member_description = enum_member_description + " " + line
+                                else:
+                                    enum_member_description = line
+                            else:
+                                enum_member_description = line
+                            continue
+                        if "##" in line:
+                            com, doc = line.split("##")
+                            com = com.strip()
+                            doc = doc.strip
+                            if "enum_member_tmp_description" in locals():
+                                if enum_member_description != "" or enum_member_description is not None:
+                                    enum_member_description = enum_member_description + " " + doc
+                                else:
+                                    enum_member_description = doc
+                            else:
+                                enum_member_description = doc
+                            if "=" in line:
+                                enum_member_value_name, enum_member_value_int = line.split("=")
+                                enum_member_value_name = enum_member_value_name.strip()
+                                enum_member_value_int = enum_member_value_int.strip()
+                            else:
+                                enum_member_value_name = line.strip()
+                                if len(tmp_enum_members) < 1:
+                                    enum_member_value_int = 0
+                                else:
+                                    enum_member_value_int = tmp_enum_members[-1].value_int + 1
+                            tmp_enum_members.append(
+                                EnumMemberDoc(enum_member_value_name, enum_member_value_int, enum_member_description)
+                            )
+                            continue
+                        if "=" in line:
+                            enum_member_value_name, enum_member_value_int = line.split("=")
+                            enum_member_value_name = enum_member_value_name.strip()
+                            enum_member_value_int = enum_member_value_int.strip()
+                        else:
+                            enum_member_value_name = line.strip()
+                            if len(tmp_enum_members) < 1:
+                                enum_member_value_int = 0
+                            else:
+                                enum_member_value_int = tmp_enum_members[-1].value_int + 1
+                        tmp_enum_members.append(
+                            EnumMemberDoc(enum_member_value_name, enum_member_value_int, enum_member_description)
+                        )
+                        if line.endswith("}"):
+                            # todo: add enum with members to doc
+
+                            pass
                         continue
                     if scan_stage == "args":
 
