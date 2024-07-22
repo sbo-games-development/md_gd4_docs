@@ -25,4 +25,19 @@ class FuncDoc:
         self.args = args
 
     def append_code_line(self, line: str):
+        """
+        Appends a line of code to the func doc. No auto linebreak, so \n need to be in line (if needed)
+
+        Args:
+            line: The line of code to be added
+        """
         self.code = self.code + line
+
+    def set_code(self, code: str):
+        """
+        Sets the code of the function to the func doc
+
+        Args:
+            code: All Code lines of the function
+        """
+        self.code = code

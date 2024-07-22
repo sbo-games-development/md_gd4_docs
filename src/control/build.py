@@ -403,6 +403,20 @@ class Build:
                             description_helper = line.replace("##", "", 1).strip()
                             if not description_helper.replace("#", "").strip() == "":
                                 scan_stage = "brief_description"
+                                if description_helper.strip().startswith("Args:"):
+                                    scan_stage = "args"
+                                    tmp_args_indent = self.count_indent(line)
+
+                                    # todo: scan args line for more text
+
+                                    pass
+                                if description_helper.startswith("Returns:"):
+                                    scan_stage = "returns"
+                                    tmp_returns_indent = self.count_indent(line)
+
+                                    # todo: scan args line for more text
+
+                                    pass
                                 if description_helper.startswith("@tutorial"):
                                     description_helper = description_helper.split(":", 1)
                                     description_helper[1] = description_helper[1].strip()
@@ -551,9 +565,17 @@ class Build:
                                 class_doc.add_attribute(var_name, var_data_type, var_description, var_value, var_type)
                                 continue
                             if line.strip().startswith("func"):
+                                scan_stage = "func"
+                                tmp_func_indent = self.count_indent(line)
+
+                                # todo: implement func ## in line
 
                                 continue
                             if line.strip().startswith("class"):
+                                scan_stage = "inner_class"
+                                tmp_inner_class_indent = self.count_indent(line)
+
+                                # todo: implement class ## in line
 
                                 continue
                         if "class_name" in line:
@@ -761,9 +783,17 @@ class Build:
                                 scan_stage = "@onready"
                                 continue
                             if line.strip().startswith("func"):
+                                scan_stage = "func"
+                                tmp_func_indent = self.count_indent(line)
+
+                                # todo: implement func outer desc
 
                                 continue
                             if line.strip().startswith("class"):
+                                scan_stage = "inner_class"
+                                tmp_inner_class_indent = self.count_indent(line)
+
+                                # todo: implement class outer desc
 
                                 continue
                             # todo: should be class docstring if nothing of the above
@@ -774,12 +804,14 @@ class Build:
                                 continue
                             else:
                                 var_type = "@export var"
+                                pass
                         if scan_stage == "@onready":
                             if not line.strip().startswith("var"):
                                 print("Warning: @onready is not followed by var, ignoring ...")
                                 continue
                             else:
                                 var_type = "@onready var"
+                                pass
                         var_value = None
                         var_data_type = "undefined"
                         if "=" in line:
@@ -896,6 +928,12 @@ class Build:
                     if scan_stage == "returns":
 
                         continue
+                    if scan_stage == "func":
+
+                        pass
+                    if scan_stage == "inner_class":
+
+                        pass
         except Exception as e:
 
             # todo: broader exception handling

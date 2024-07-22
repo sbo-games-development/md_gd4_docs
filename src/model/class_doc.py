@@ -40,12 +40,30 @@ class ClassDoc:
             raise Exception("Inner classes needs to be named, no spaces allowed")
 
     def set_class_name(self, class_name: str):
+        """
+        Sets the class name of the script file (or inner class)
+
+        Args:
+            class_name: The class name to set
+        """
         self.class_name = class_name
 
     def set_is_inner_class(self, value: bool):
+        """
+        Is this an inner class?
+
+        Args:
+            value: True if inner class, otherwise false
+        """
         self.is_inner_class = value
 
     def set_extends(self, extends: str):
+        """
+        Sets the base class of this script file (or inner class)
+
+        Args:
+            extends: Base class of sript file or inner class
+        """
         self.extends = extends
 
     def add_signal(self, name: str, description: str, tags: list[TagDoc] = None):
@@ -102,4 +120,10 @@ class ClassDoc:
             self.var_docs.append(VarDoc(name, data_type, description, value, var_type, tags))
 
     def append_code_line(self, line: str):
+        """
+        Appends a line of code to the func doc. No auto linebreak, so \n need to be in line (if needed)
+
+        Args:
+            line: The line of code to be added
+        """
         self.code = self.code + line
