@@ -383,7 +383,7 @@ class Build:
             script: Path to the script to read from
             from_project: If True, the path of the script is relative to the project root (src_path)
         """
-        scan_stage: str = ""  # "", "brief_description", "detail_description", "args", "returns", todo: enum, func
+        scan_stage: str = ""  # "", "brief_description", "detail_description", "args", "returns", "enum", "func"
         tmp_brief_description = ""
         tmp_detail_description = ""
         tmp_args_description = []  # [name, type, description, value/default/required]
@@ -405,14 +405,14 @@ class Build:
                                 scan_stage = "brief_description"
                                 if description_helper.strip().startswith("Args:"):
                                     scan_stage = "args"
-                                    tmp_args_indent = self.count_indent(line)
+                                    tmp_args_indent = self.get_indent(line)
 
                                     # todo: scan args line for more text
 
                                     pass
                                 if description_helper.startswith("Returns:"):
                                     scan_stage = "returns"
-                                    tmp_returns_indent = self.count_indent(line)
+                                    tmp_returns_indent = self.get_indent(line)
 
                                     # todo: scan args line for more text
 
@@ -566,14 +566,44 @@ class Build:
                                 continue
                             if line.strip().startswith("func"):
                                 scan_stage = "func"
-                                tmp_func_indent = self.count_indent(line)
+                                tmp_func_returns = "None"
+                                tmp_func_indent = self.get_indent(line)
+                                cmd, doc = line.split("##")
+                                tmp_brief_description = doc.strip
+                                cmd = cmd.replace("func").strip()
+                                if not cmd.endswith(":") or "(" not in cmd or ")" not in cmd:
+                                    scan_stage = ""
+                                    tmp_func_indent = ""
+                                    tmp_brief_description = ""
+                                    print(f"{line} is not a valid func, ignoring")
+                                    continue
+                                cmd = cmd.replace(":", "")
+                                if "->" in cmd:
+                                    cmd, tmp_func_returns = cmd.split("->")
+                                    tmp_func_returns = tmp_func_returns.strip()
+                                    cmd = cmd.strip()
+                                cmd, args = cmd.split("(", 1)
+                                cmd = cmd.strip()
+                                args = args.strip()
+                                if not args.endswith(")"):
+                                    scan_stage = ""
+                                    tmp_func_indent = ""
+                                    tmp_brief_description = ""
+                                    print(f"{line} is not a valid func, ignoring")
+                                    continue
+                                args = args.strip(")")
+                                if "," in args:
+                                    args = args.split(",")
+                                else:
+                                    args = [args, ]
+                                for arg in args:
 
+                                    pass
                                 # todo: implement func ## in line
-
                                 continue
                             if line.strip().startswith("class"):
                                 scan_stage = "inner_class"
-                                tmp_inner_class_indent = self.count_indent(line)
+                                tmp_inner_class_indent = self.get_indent(line)
 
                                 # todo: implement class ## in line
 
@@ -784,14 +814,14 @@ class Build:
                                 continue
                             if line.strip().startswith("func"):
                                 scan_stage = "func"
-                                tmp_func_indent = self.count_indent(line)
+                                tmp_func_indent = self.get_indent(line)
 
                                 # todo: implement func outer desc
 
                                 continue
                             if line.strip().startswith("class"):
                                 scan_stage = "inner_class"
-                                tmp_inner_class_indent = self.count_indent(line)
+                                tmp_inner_class_indent = self.get_indent(line)
 
                                 # todo: implement class outer desc
 
@@ -956,23 +986,34 @@ class Build:
                 return True
         return False
 
-    def count_indent(self, line: str) -> int:
+    def get_indent(self, line: str) -> str:
         """
-        Counts indents of a text line. Indent type is specified in self.indent "read from md_gd4_docs.yml" and are
-        either tabulators or spaces:numer_of_spaces between 2 and 12
+        Form the indent of a line as a string consisting either of tabulators or spaces. Can be used to remove a
+        trailing indent on multiple code lines.
 
         Args:
             line: The str to count indent of
 
         Returns:
-            Number of indents, -1 if invalid spaces indent number
+            Indent as str, consisting of tabulator(s) or spaces
         """
         if self.indent == "tabulator":
             indent_count = len(line) - len(line.lstrip("\t"))
+            indent_str = ""
+            if indent_count > 0:
+                for i in range(indent_count):
+                    indent_str = indent_str + "\t"
+                    pass
         else:
             number = int(self.indent.split(":", 1)[1].strip())
             if self.indent % number == 0:
-                indent_count = (len(line) - len(line.lstrip(" "))) / number
+                indent_count = int((len(line) - len(line.lstrip(" "))) / number)
+                indent_str = ""
+                one_indent = ""
+                for i in range(number):
+                    one_indent = one_indent + " "
+                for i in range(indent_count):
+                    indent_str = indent_str + one_indent
             else:
-                indent_count = -1
-        return indent_count
+                indent_str = "undefined"
+        return indent_str
